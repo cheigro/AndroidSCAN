@@ -1,0 +1,60 @@
+import os
+import smtplib
+import hashlib
+
+# Function to scan a file for malware
+def scan_file(file_path):
+    try:
+        with open(file_path, 'rb') as file:
+            content = file.read()
+            file_hash = hashlib.md5(content).hexdigest()
+            # Check the file hash against a known database of malware hashes
+            if file_hash in malware_hash_database:
+                return True
+    except IOError:
+        pass
+    return False
+
+# Function to scan all files in a directory
+def scan_directory(directory_path):
+    for root, dirs, files in os.walk(directory_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            if scan_file(file_path):
+                return True
+    return False
+
+# Function to send an email alert
+def send_email_alert(subject, body):
+    # Configure SMTP settings for your email service
+    smtp_server = 'smtp.example.com'
+    smtp_port = 587
+    sender_email = 'your_email@example.com'
+    receiver_email = 'recipient_email@example.com'
+    password = 'your_email_password'
+    
+    message = f'Subject: {subject}\n\n{body}'
+    
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message)
+
+# Main function
+def main():
+    # Specify the directory to scan (e.g., '/sdcard' for the external storage)
+    directory_to_scan = '/sdcard'
+    
+    # Scan the directory for malware
+    if scan_directory(directory_to_scan):
+        # Alert if malware is found
+        send_email_alert('Malware Alert', 'Malicious files detected on the device!')
+        print('Malicious files detected. Email alert sent.')
+    else:
+        print('No malicious files found.')
+
+# Malware hash database
+malware_hash_database = ['f7b6e830e8a2f46596c7a99d1c9db0d9', 'a4a6e215e3e7c8e8b5b86b10f798ee2f']
+
+# Run the main function
+main()
